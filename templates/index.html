@@ -29,6 +29,11 @@
       border-radius: 15px;
       padding: 20px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: all 0.25s ease;
+    }
+    .card:hover {
+      transform: scale(1.02);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
     .card h1 {
       font-size: 1.2rem;
@@ -49,8 +54,9 @@
     #logsWrapper { grid-column: 1 / -1; }
     #logsContainer {
       margin-top: 10px;
-      max-height: 400px;   /* Scrollable height */
+      max-height: 400px;
       overflow-y: auto;
+      padding-right: 10px;
     }
     .log-entry {
       background: var(--primary);
@@ -63,7 +69,11 @@
     .log-status { font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 8px; width: fit-content; }
     .connected-status { background: #d1fae5; color: #028a0f; }
     .disconnected-status { background: #fde2e1; color: #dc3545; }
-    .log-details { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px 20px; }
+    .log-details { 
+      display: grid; 
+      grid-template-columns: repeat(2,1fr);  /* ✅ Two-column layout (2,2,2,1) */
+      gap: 10px 20px; 
+    }
     .log-details div { display: flex; flex-direction: column; }
     .log-row-label { font-weight: 500; color: var(--secondary); }
     .log-row-value { font-weight: bold; color: var(--dark); }
