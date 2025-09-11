@@ -2,7 +2,6 @@ import os, json
 from flask import Flask, request, jsonify, render_template
 import firebase_admin
 from firebase_admin import credentials, firestore
-from datetime import datetime
 
 app = Flask(__name__)
 
@@ -23,13 +22,6 @@ rover_logs = db.collection("rover_logs")  # Stores history logs
 @app.route("/")
 def home():
     return render_template("index.html")
-
-@app.route("/debug")
-def debug():
-    return jsonify({
-        "FIREBASE_KEY_EXISTS": "FIREBASE_KEY" in os.environ,
-        "DB_INIT": "yes" if 'db' in globals() else "no"
-    })
 
 @app.route("/rovers", methods=["GET"])
 def list_rovers():
@@ -56,14 +48,15 @@ def create_or_update_rover():
     # Update latest rover data
     rover.document(doc_id).set({**data, "timestamp": timestamp})
 
-    # Add a new log entry
-    rover_logs.add({**data, "timestamp": timestamp})
+    # Add a new log entry with rover id
+    rover_logs.add({**data, "id": doc_id, "timestamp": timestamp})
 
     return jsonify({"success": True, "message": "Rover data updated and logged"}), 201
 
-@app.route("/rover-logs/<doc_id>", methods=["GET"])
-def get_rover_logs(doc_id):
-    logs_ref = rover_logs.where("id", "==", doc_id).order_by("timestamp", direction=firestore.Query.DESCENDING)
+@app.route("/rover-logs/<rover_id>", methods=["GET"])
+def get_rover_logs(rover_id):
+    # Fetch logs for the given rover ID
+    logs_ref = rover_logs.where("id", "==", rover_id).order_by("timestamp", direction=firestore.Query.DESCENDING)
     docs = logs_ref.stream()
     all_logs = [doc.to_dict() for doc in docs]
     return jsonify({"success": True, "data": all_logs}), 200
