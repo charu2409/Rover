@@ -191,6 +191,8 @@ async function fetchRoverLogs() {
     header.appendChild(tsEl); header.appendChild(statusEl); entry.appendChild(header);
 
     let details=document.createElement("div"); details.className="log-details";
+
+    // ✅ Correct order for 2,2,2,1 layout
     let fields=[
       ["Mode:", log.mode ?? 0],
       ["Speed:", speedMap[log.speed] ?? log.speed ?? 0],
@@ -200,12 +202,14 @@ async function fetchRoverLogs() {
       ["Shearing:", shearingMap[log.shearingarm] ?? log.shearingarm ?? 0],
       ["Heartbeat:", log.heartbeat ?? 0]
     ];
+
     fields.forEach(f=>{
       let div=document.createElement("div");
       let l=document.createElement("span"); l.className="log-row-label"; l.innerText=f[0];
       let v=document.createElement("span"); v.className="log-row-value"; v.innerText=f[1];
       div.appendChild(l); div.appendChild(v); details.appendChild(div);
     });
+
     entry.appendChild(details); container.appendChild(entry);
   });
 }
