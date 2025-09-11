@@ -116,15 +116,15 @@
       <h1>Vehicle Status</h1>
       <div class="row">
         <span class="label">Mode</span>
-        <span class="value" id="mode">0</span>
+        <span class="value" id="mode">--</span>
       </div>
       <div class="row">
         <span class="label">Speed</span>
-        <span class="value" id="speed">0</span>
+        <span class="value" id="speed">--</span>
       </div>
       <div class="row">
         <span class="label">Shearing Arm</span>
-        <span class="value" id="shearingarm">0</span>
+        <span class="value" id="shearingarm">--</span>
       </div>
     </div>
 
@@ -133,15 +133,15 @@
       <h1>Steering & Control</h1>
       <div class="row">
         <span class="label">Steering Angle</span>
-        <span class="value" id="angle">0°</span>
+        <span class="value" id="angle">--</span>
       </div>
       <div class="row">
         <span class="label">Steering Mode</span>
-        <span class="value" id="steeringmode">0</span>
+        <span class="value" id="steeringmode">--</span>
       </div>
       <div class="row">
         <span class="label">Joystick</span>
-        <span class="value" id="joystick">0</span>
+        <span class="value" id="joystick">--</span>
       </div>
     </div>
 
@@ -150,7 +150,7 @@
       <h1>Connection Health</h1>
       <div class="row">
         <span class="label">Heartbeat Status</span>
-        <span class="value" id="heartbeat">0</span>
+        <span class="value" id="heartbeat">--</span>
       </div>
       <div class="row">
         <span class="label">Last Update</span>
@@ -163,25 +163,30 @@
   </div>
 
   <script>
+    // Value mappings
+    const speedMap = {1: "0.5 kmph", 2: "1 kmph", 3: "1.5 kmph", 4: "2 kmph", 5: "2.5 kmph"};
+    const steeringMap = {1: "Home pos", 2: "All wheel", 3: "Zero turn", 4: "Crab"};
+    const shearingMap = {0: "Home pos", 1: "Sensing pos"};
+
     async function fetchRoverData() {
       try {
-        // Change "rover1" to your actual Firestore document ID
-        let res = await fetch("/rover/rover1");
-        let data = await res.json();
+        let res = await fetch("/rovers");
+        let result = await res.json();
 
-        if (data.success) {
-          let d = data.data;
-          document.getElementById("mode").innerText = d.mode ?? 0;
-          document.getElementById("speed").innerText = d.speed ?? 0;
-          document.getElementById("shearingarm").innerText = d.shearingarm ?? 0;
-          document.getElementById("angle").innerText = (d.angle ?? 0) + "°";
-          document.getElementById("steeringmode").innerText = d.steeringmode ?? 0;
-          document.getElementById("joystick").innerText = d.joystick ?? 0;
-          document.getElementById("heartbeat").innerText = d.heartbeat ?? 0;
+        if (result.success && result.data) {
+          let d = result.data;
 
-          // Update connection status
+          document.getElementById("mode").innerText = d.Mode ?? "--";
+          document.getElementById("speed").innerText = speedMap[d.Speed] ?? "--";
+          document.getElementById("shearingarm").innerText = shearingMap[d.Shearing_Arm] ?? "--";
+          document.getElementById("angle").innerText = (d.Angle ?? 0) + "°";
+          document.getElementById("steeringmode").innerText = steeringMap[d.Steering_Mode] ?? "--";
+          document.getElementById("joystick").innerText = d.Joystick ?? "--";
+          document.getElementById("heartbeat").innerText = d.Heartbeat ?? "--";
+
+          // Status check
           let statusEl = document.getElementById("status");
-          if (d.heartbeat && d.heartbeat > 0) {
+          if (d.Heartbeat && d.Heartbeat > 0) {
             statusEl.innerText = "Connected";
             statusEl.className = "status connected";
           } else {
@@ -189,18 +194,19 @@
             statusEl.className = "status disconnected";
           }
 
-          // Update last update time
-          document.getElementById("lastupdate").innerText =
-            new Date().toLocaleTimeString();
+          // Last update timestamp (from Firestore)
+          document.getElementById("lastupdate").innerText = d.timestamp
+            ? new Date(d.timestamp).toLocaleString()
+            : "--";
         }
       } catch (err) {
         console.error("Error fetching rover data", err);
       }
     }
 
-    // Refresh every 2 seconds
+    // Poll every 2 seconds
     setInterval(fetchRoverData, 2000);
-    fetchRoverData(); // initial load
+    fetchRoverData();
   </script>
 
 </body>
