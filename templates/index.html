@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rover Telemetry Dashboard</title>
+  <title>Rover Dashboard</title>
   <style>
     :root {
       --primary: #E0E1DD;
@@ -15,24 +15,12 @@
       --connected: #28a745;
       --disconnected: #dc3545;
     }
-    body {
-      margin: 0;
-      font-family: "Segoe UI", Tahoma, sans-serif;
-      background: var(--primary);
-      color: var(--dark);
-    }
-    header {
-      background: var(--accent);
-      color: var(--white);
-      padding: 15px 25px;
-      text-align: center;
-      font-size: 2rem;
-      font-weight: bold;
-    }
+    body { margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: var(--primary); color: var(--dark); }
+    header { background: var(--accent); color: var(--white); padding: 15px 25px; text-align: center; font-size: 2rem; font-weight: bold; }
 
     .container {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(3, 1fr); /* 3 equal cards in a row */
       gap: 20px;
       padding: 30px;
     }
@@ -41,11 +29,6 @@
       border-radius: 15px;
       padding: 20px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      transition: all 0.3s ease;
-    }
-    .card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     }
     .card h1 {
       font-size: 1.2rem;
@@ -53,12 +36,7 @@
       margin-bottom: 15px;
       color: var(--secondary);
     }
-    .row {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--line);
-    }
+    .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); }
     .label { font-size: 1rem; font-weight: 500; }
     .value { font-size: 1rem; font-weight: bold; color: var(--dark); }
 
@@ -68,50 +46,30 @@
     .disconnected { color: var(--disconnected); }
 
     /* Logs */
-    #logsWrapper { grid-column: 1 / -1; display: flex; flex-direction: column; }
+    #logsWrapper { grid-column: 1 / -1; }
     #logsContainer {
       margin-top: 10px;
-      max-height: 500px;
-      overflow-y: auto;
-      padding-right: 5px;
+      max-height: 400px;   /* fixed height */
+      overflow-y: auto;    /* scrollable */
+      padding-right: 8px;
     }
     .log-entry {
       background: var(--primary);
       border-radius: 10px;
-      padding: 15px 20px;
+      padding: 15px;
       margin-bottom: 15px;
-    }
-    .log-header {
       display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
+      flex-direction: column;
     }
-    .log-timestamp {
-      font-weight: bold;
-      color: var(--secondary);
-    }
-    .log-status {
-      font-weight: bold;
-      font-size: 0.8rem;
-      padding: 3px 8px;
-      border-radius: 8px;
-      width: fit-content;
-    }
+    .log-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+    .log-timestamp { font-weight: bold; color: var(--secondary); }
+    .log-status { font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 8px; width: fit-content; }
     .connected-status { background: #d1fae5; color: #028a0f; }
     .disconnected-status { background: #fde2e1; color: #dc3545; }
-
-    /* Fixed 2 rows with equal-width columns */
-    .log-details {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px 20px;
-    }
+    .log-details { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px 20px; }
+    .log-details div { display: flex; flex-direction: column; }
     .log-row-label { font-weight: 500; color: var(--secondary); }
     .log-row-value { font-weight: bold; color: var(--dark); }
-
-    .log-row {
-      display: contents; /* keeps equal column alignment */
-    }
   </style>
 </head>
 <body>
@@ -148,11 +106,6 @@ const ROVER_ID = "rover1";
 const speedMap = {1:"0.5 kmph",2:"1 kmph",3:"1.5 kmph",4:"2 kmph",5:"2.5 kmph"};
 const steeringMap = {1:"Home position",2:"All wheel mode",3:"Zero turn",4:"Crab"};
 const shearingMap = {0:"Home position",1:"Sensing position"};
-const joystickMap = {0:"Neutral",1:"Forward",2:"Backward"};
-
-function checkConnection(heartbeat) {
-  return (heartbeat >= 1 && heartbeat <= 255);
-}
 
 async function fetchRoverData() {
   let res = await fetch(`/rover/${ROVER_ID}`);
@@ -164,15 +117,11 @@ async function fetchRoverData() {
     document.getElementById("shearingarm").innerText = shearingMap[d.shearingarm] ?? d.shearingarm ?? 0;
     document.getElementById("angle").innerText = (d.angle ?? 0) + "°";
     document.getElementById("steeringmode").innerText = steeringMap[d.steeringmode] ?? d.steeringmode ?? 0;
-    document.getElementById("joystick").innerText = joystickMap[d.joystick] ?? d.joystick ?? 0;
+    document.getElementById("joystick").innerText = d.joystick ?? 0;
     document.getElementById("heartbeat").innerText = d.heartbeat ?? 0;
-
     let statusEl = document.getElementById("status");
-    if (checkConnection(d.heartbeat)) {
-      statusEl.innerText="Connected"; statusEl.className="status connected";
-    } else {
-      statusEl.innerText="Disconnected"; statusEl.className="status disconnected";
-    }
+    if (d.heartbeat && d.heartbeat>0) {statusEl.innerText="Connected"; statusEl.className="status connected";}
+    else {statusEl.innerText="Disconnected"; statusEl.className="status disconnected";}
     document.getElementById("lastupdate").innerText = new Date().toLocaleTimeString();
   }
 }
@@ -193,30 +142,25 @@ async function fetchRoverLogs() {
     let entry=document.createElement("div"); entry.className="log-entry";
     let header=document.createElement("div"); header.className="log-header";
     let tsEl=document.createElement("span"); tsEl.className="log-timestamp"; tsEl.innerText=ts;
-    let statusEl=document.createElement("span"); 
-    statusEl.className="log-status "+(checkConnection(log.heartbeat)?"connected-status":"disconnected-status");
-    statusEl.innerText=(checkConnection(log.heartbeat)?"Connected":"Disconnected");
+    let statusEl=document.createElement("span"); statusEl.className="log-status "+((log.heartbeat&&log.heartbeat>0)?"connected-status":"disconnected-status");
+    statusEl.innerText=(log.heartbeat&&log.heartbeat>0)?"Connected":"Disconnected";
     header.appendChild(tsEl); header.appendChild(statusEl); entry.appendChild(header);
-
-    let details=document.createElement("div"); details.className="log-details log-row";
-
+    let details=document.createElement("div"); details.className="log-details";
     let fields=[
       ["Mode:", log.mode ?? 0],
       ["Speed:", speedMap[log.speed] ?? log.speed ?? 0],
       ["Shearing Arm:", shearingMap[log.shearingarm] ?? log.shearingarm ?? 0],
       ["Steering Angle:", (log.angle ?? 0) + "°"],
       ["Steering Mode:", steeringMap[log.steeringmode] ?? log.steeringmode ?? 0],
-      ["Joystick:", joystickMap[log.joystick] ?? log.joystick ?? 0],
+      ["Joystick:", log.joystick ?? 0],
       ["Heartbeat:", log.heartbeat ?? 0]
     ];
-
     fields.forEach(f=>{
       let div=document.createElement("div");
       let l=document.createElement("span"); l.className="log-row-label"; l.innerText=f[0];
       let v=document.createElement("span"); v.className="log-row-value"; v.innerText=f[1];
       div.appendChild(l); div.appendChild(v); details.appendChild(div);
     });
-
     entry.appendChild(details); container.appendChild(entry);
   });
 }
