@@ -15,69 +15,40 @@
       --connected: #28a745;
       --disconnected: #dc3545;
     }
-    body 
-    { 
-      margin: 0; 
-      font-family: "Segoe UI", Tahoma, sans-serif; 
-      background: var(--primary); 
-      color: var(--dark); 
-    }
-    header 
-    { 
-      background: var(--accent); 
-      color: var(--white); 
-      padding: 15px 25px; 
-      text-align: center; 
-      font-size: 2rem; 
-      font-weight: bold; 
-    }
+    body { margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: var(--primary); color: var(--dark); }
+    header { background: var(--accent); color: var(--white); padding: 15px 25px; text-align: center; font-size: 2rem; font-weight: bold; }
 
     .container {
-      display: grid; 
-      rid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-      gap: 20px; 
-      padding: 30px; }
-    
+      display: grid;
+      grid-template-columns: repeat(3, 1fr); /* 3 equal cards in a row */
+      gap: 20px;
+      padding: 30px;
+    }
     .card {
-      background: var(--white); 
-      border-radius: 15px; 
-      padding: 20px; 
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    
-    .card h1 { 
-      font-size: 1.2rem; 
-      text-align: center; 
-      margin-bottom: 15px; 
-      color: var(--secondary); }
-    
-    .row { 
-      display: flex; 
-      justify-content: space-between; 
-      padding: 10px 0; 
-      border-bottom: 1px solid var(--line); }
-    
-    .label { 
-      font-size: 1rem; 
-      font-weight: 500; }
-    
-    .value { 
-      font-size: 1rem; 
-      font-weight: bold; 
-      color: var(--dark); }
-    
-    .status { 
-      font-size: 1.6rem; 
-      font-weight: bold; }
-    
-    .connected { 
-      color: var(--connected);
-      text-align: center }
-    
-    .disconnected { 
-      color: var(--disconnected);
-      text-align: center }
+      background: var(--white);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .card h1 {
+      font-size: 1.2rem;
+      text-align: center;
+      margin-bottom: 15px;
+      color: var(--secondary);
+    }
+    .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    .label { font-size: 1rem; font-weight: 500; }
+    .value { font-size: 1rem; font-weight: bold; color: var(--dark); }
+
+    .status-container { display: flex; justify-content: center; margin-top: 20px; }
+    .status { font-size: 1.6rem; font-weight: bold; }
+    .connected { color: var(--connected); }
+    .disconnected { color: var(--disconnected); }
 
     /* Logs */
+    #logsWrapper {
+      grid-column: 1 / -1; /* span full width */
+    }
     #logsContainer { margin-top: 10px; }
     .log-entry {
       background: var(--primary);
@@ -87,47 +58,15 @@
       display: flex;
       flex-direction: column;
     }
-    .log-header { 
-      display: flex; 
-      justify-content: space-between; 
-      margin-bottom: 10px; }
-    
-    .log-timestamp { 
-      font-weight: bold; 
-      color: var(--secondary); }
-    
-    .log-status { 
-      font-weight: bold; 
-      font-size: 0.8rem; 
-      padding: 3px 8px; 
-      border-radius: 8px;
-      width: fit-content; }
-    
-    .connected-status { 
-      background: #d1fae5; 
-      color: #028a0f; }
-    
-    .disconnected-status { 
-      background: #fde2e1; 
-      color: #dc3545; }
-    
-    .log-details { 
-      display: grid; 
-      grid-template-columns: repeat(4,1fr); 
-      gap: 10px 20px; }
-    
-    .log-details div { 
-      display: flex; 
-      flex-direction: column; }
-    
-    .log-row-label { 
-      font-weight: 500; 
-      color: var(--secondary); }
-    
-    .log-row-value { 
-      font-weight: bold; 
-      color: var(--dark); }
-    
+    .log-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+    .log-timestamp { font-weight: bold; color: var(--secondary); }
+    .log-status { font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 8px; width: fit-content; }
+    .connected-status { background: #d1fae5; color: #028a0f; }
+    .disconnected-status { background: #fde2e1; color: #dc3545; }
+    .log-details { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px 20px; }
+    .log-details div { display: flex; flex-direction: column; }
+    .log-row-label { font-weight: 500; color: var(--secondary); }
+    .log-row-value { font-weight: bold; color: var(--dark); }
   </style>
 </head>
 <body>
@@ -152,10 +91,8 @@
     <div class="row"><span class="label">Last Update</span><span class="value" id="lastupdate">--</span></div>
     <div class="status-container"><span id="status" class="status disconnected">Disconnected</span></div>
   </div>
-</div>
 
-<div class="container">
-  <div class="card" style="grid-column: 1 / -1;">
+  <div class="card" id="logsWrapper">
     <h1>Telemetry Log</h1>
     <div id="logsContainer"></div>
   </div>
@@ -193,8 +130,13 @@ async function fetchRoverLogs() {
   let container = document.getElementById("logsContainer");
   container.innerHTML = "";
   logs.forEach(log=>{
-    let ts = log.timestamp && log.timestamp._seconds ? new Date(log.timestamp._seconds*1000).toLocaleTimeString() : "--";
-    let entry = document.createElement("div"); entry.className="log-entry";
+    let ts = "--";
+    if (log.timestamp) {
+      if (log.timestamp.seconds) ts = new Date(log.timestamp.seconds*1000).toLocaleTimeString();
+      else if (log.timestamp._seconds) ts = new Date(log.timestamp._seconds*1000).toLocaleTimeString();
+      else ts = new Date(log.timestamp).toLocaleTimeString();
+    }
+    let entry=document.createElement("div"); entry.className="log-entry";
     let header=document.createElement("div"); header.className="log-header";
     let tsEl=document.createElement("span"); tsEl.className="log-timestamp"; tsEl.innerText=ts;
     let statusEl=document.createElement("span"); statusEl.className="log-status "+((log.heartbeat&&log.heartbeat>0)?"connected-status":"disconnected-status");
