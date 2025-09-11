@@ -100,35 +100,52 @@
       color: var(--disconnected);
     }
 
-    /* Rover Logs */
-    #logsContainer {
-      max-height: 300px;
-      overflow-y: auto;
-    }
-
-    .log-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 10px;
-      border-bottom: 1px solid var(--line);
-      font-size: 0.95rem;
-    }
-
-    .log-row:last-child {
-      border-bottom: none;
+    /* Log UI */
+    #logsContainer { margin-top: 10px; }
+    .log-entry {
+      background: var(--primary);
+      border-radius: 10px;
+      padding: 15px 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
     }
 
     .log-timestamp {
+      font-weight: bold;
       color: var(--secondary);
-      font-weight: 500;
-      margin-right: 10px;
-      min-width: 150px;
     }
 
-    .log-data {
-      color: var(--dark);
+    .log-status {
       font-weight: bold;
-      flex: 1;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      text-align: center;
+    }
+
+    .connected-status {
+      background: #d1fae5;
+      color: #028a0f;
+    }
+
+    .log-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 30px;
+      margin-top: 8px;
+    }
+
+    .log-row-label {
+      font-weight: 500;
+      color: var(--secondary);
+    }
+
+    .log-row-value {
+      font-weight: bold;
+      color: var(--dark);
     }
 
     @media (max-width: 600px) {
@@ -138,141 +155,137 @@
   </style>
 </head>
 <body>
+<header>Rover Telemetry Dashboard</header>
 
-  <header>Rover Telemetry Dashboard</header>
-
-  <!-- First three cards -->
-  <div class="container">
-    <!-- Vehicle Status -->
-    <div class="card">
-      <h1>Vehicle Status</h1>
-      <div class="row">
-        <span class="label">Mode</span>
-        <span class="value" id="mode">0</span>
-      </div>
-      <div class="row">
-        <span class="label">Speed</span>
-        <span class="value" id="speed">0</span>
-      </div>
-      <div class="row">
-        <span class="label">Shearing Arm</span>
-        <span class="value" id="shearingarm">0</span>
-      </div>
-    </div>
-
-    <!-- Steering & Control -->
-    <div class="card">
-      <h1>Steering & Control</h1>
-      <div class="row">
-        <span class="label">Steering Angle</span>
-        <span class="value" id="angle">0°</span>
-      </div>
-      <div class="row">
-        <span class="label">Steering Mode</span>
-        <span class="value" id="steeringmode">0</span>
-      </div>
-      <div class="row">
-        <span class="label">Joystick</span>
-        <span class="value" id="joystick">0</span>
-      </div>
-    </div>
-
-    <!-- Connection Health -->
-    <div class="card">
-      <h1>Connection Health</h1>
-      <div class="row">
-        <span class="label">Heartbeat Status</span>
-        <span class="value" id="heartbeat">0</span>
-      </div>
-      <div class="row">
-        <span class="label">Last Update</span>
-        <span class="value" id="lastupdate">--</span>
-      </div>
-      <div class="status-container">
-        <span id="status" class="status disconnected">Disconnected</span>
-      </div>
-    </div>
+<div class="container">
+  <!-- Vehicle Status -->
+  <div class="card">
+    <h1>Vehicle Status</h1>
+    <div class="row"><span class="label">Mode</span><span class="value" id="mode">0</span></div>
+    <div class="row"><span class="label">Speed</span><span class="value" id="speed">0</span></div>
+    <div class="row"><span class="label">Shearing Arm</span><span class="value" id="shearingarm">0</span></div>
   </div>
 
-  <!-- Logs card below all three -->
-  <div class="container">
-    <div class="card" style="grid-column: 1 / -1;">
-      <h1>Rover Logs</h1>
-      <div id="logsContainer"></div>
-    </div>
+  <!-- Steering & Control -->
+  <div class="card">
+    <h1>Steering & Control</h1>
+    <div class="row"><span class="label">Steering Angle</span><span class="value" id="angle">0°</span></div>
+    <div class="row"><span class="label">Steering Mode</span><span class="value" id="steeringmode">0</span></div>
+    <div class="row"><span class="label">Joystick</span><span class="value" id="joystick">0</span></div>
   </div>
 
-  <script>
-    const ROVER_ID = "rover1"; // Change to your rover ID if needed
+  <!-- Connection Health -->
+  <div class="card">
+    <h1>Connection Health</h1>
+    <div class="row"><span class="label">Heartbeat Status</span><span class="value" id="heartbeat">0</span></div>
+    <div class="row"><span class="label">Last Update</span><span class="value" id="lastupdate">--</span></div>
+    <div class="status-container"><span id="status" class="status disconnected">Disconnected</span></div>
+  </div>
+</div>
 
-    async function fetchRoverData() {
-      try {
-        let res = await fetch(`/rover/${ROVER_ID}`);
-        let json = await res.json();
-        if (json.success) {
-          let d = json.data;
-          document.getElementById("mode").innerText = d.mode ?? 0;
-          document.getElementById("speed").innerText = d.speed ?? 0;
-          document.getElementById("shearingarm").innerText = d.shearingarm ?? 0;
-          document.getElementById("angle").innerText = (d.angle ?? 0) + "°";
-          document.getElementById("steeringmode").innerText = d.steeringmode ?? 0;
-          document.getElementById("joystick").innerText = d.joystick ?? 0;
-          document.getElementById("heartbeat").innerText = d.heartbeat ?? 0;
+<!-- Logs Card -->
+<div class="container">
+  <div class="card" style="grid-column: 1 / -1;">
+    <h1>Telemetry Log</h1>
+    <div id="logsContainer"></div>
+  </div>
+</div>
 
-          let statusEl = document.getElementById("status");
-          if (d.heartbeat && d.heartbeat > 0) {
-            statusEl.innerText = "Connected";
-            statusEl.className = "status connected";
-          } else {
-            statusEl.innerText = "Disconnected";
-            statusEl.className = "status disconnected";
-          }
+<script>
+const ROVER_ID = "rover1"; // Change if needed
 
-          document.getElementById("lastupdate").innerText = new Date().toLocaleTimeString();
-        }
-      } catch (err) {
-        console.error("Error fetching rover data", err);
+async function fetchRoverData() {
+  try {
+    let res = await fetch(`/rover/${ROVER_ID}`);
+    let data = await res.json();
+    if (data.success) {
+      let d = data.data;
+      document.getElementById("mode").innerText = d.mode ?? 0;
+      document.getElementById("speed").innerText = d.speed ?? 0;
+      document.getElementById("shearingarm").innerText = d.shearingarm ?? 0;
+      document.getElementById("angle").innerText = (d.angle ?? 0) + "°";
+      document.getElementById("steeringmode").innerText = d.steeringmode ?? 0;
+      document.getElementById("joystick").innerText = d.joystick ?? 0;
+      document.getElementById("heartbeat").innerText = d.heartbeat ?? 0;
+
+      let statusEl = document.getElementById("status");
+      if (d.heartbeat && d.heartbeat > 0) {
+        statusEl.innerText = "Connected";
+        statusEl.className = "status connected";
+      } else {
+        statusEl.innerText = "Disconnected";
+        statusEl.className = "status disconnected";
       }
+
+      document.getElementById("lastupdate").innerText = new Date().toLocaleTimeString();
     }
+  } catch (err) { console.error(err); }
+}
 
-    async function fetchRoverLogs() {
-      try {
-        let res = await fetch(`/rover-logs/${ROVER_ID}`);
-        let json = await res.json();
-        let logs = json.data ?? [];
-        let container = document.getElementById("logsContainer");
-        container.innerHTML = "";
+async function fetchRoverLogs() {
+  try {
+    let res = await fetch(`/rover-logs/${ROVER_ID}`);
+    let json = await res.json();
+    let logs = json.data ?? [];
+    let container = document.getElementById("logsContainer");
+    container.innerHTML = "";
 
-        logs.forEach(log => {
-          let row = document.createElement("div");
-          row.className = "log-row";
-          
-          let ts = log.timestamp && log.timestamp._seconds 
-                   ? new Date(log.timestamp._seconds * 1000).toLocaleString()
-                   : "--";
-          let tsEl = document.createElement("span");
-          tsEl.className = "log-timestamp";
-          tsEl.innerText = ts;
+    logs.forEach(log => {
+      let ts = log.timestamp && log.timestamp._seconds
+               ? new Date(log.timestamp._seconds*1000).toLocaleTimeString()
+               : "--";
 
-          let dataEl = document.createElement("span");
-          dataEl.className = "log-data";
-          dataEl.innerText = `Mode:${log.mode}, Speed:${log.speed}, ShearingArm:${log.shearingarm}, Angle:${log.angle}°, SteeringMode:${log.steeringmode}, Joystick:${log.joystick}, Heartbeat:${log.heartbeat}`;
+      let entry = document.createElement("div");
+      entry.className = "log-entry";
 
-          row.appendChild(tsEl);
-          row.appendChild(dataEl);
-          container.appendChild(row);
-        });
+      let topRow = document.createElement("div");
+      topRow.style.display = "flex";
+      topRow.style.justifyContent = "space-between";
+      topRow.style.alignItems = "center";
 
-      } catch (err) {
-        console.error("Error fetching logs", err);
-      }
-    }
+      let tsEl = document.createElement("span");
+      tsEl.className = "log-timestamp";
+      tsEl.innerText = ts;
 
-    setInterval(fetchRoverData, 2000);
-    setInterval(fetchRoverLogs, 4000); // refresh logs every 4s
-    fetchRoverData();
-    fetchRoverLogs();
-  </script>
+      let statusEl = document.createElement("span");
+      statusEl.className = "log-status connected-status";
+      statusEl.innerText = (log.heartbeat && log.heartbeat>0)?"Connected":"Disconnected";
 
+      topRow.appendChild(tsEl);
+      topRow.appendChild(statusEl);
+      entry.appendChild(topRow);
+
+      let details = document.createElement("div");
+      details.className = "log-details";
+
+      let fields = [
+        ["Mode:", log.mode ?? 0],
+        ["Speed:", log.speed ?? 0],
+        ["Steering Mode:", log.steeringmode ?? 0],
+        ["Pot Angle:", (log.angle ?? 0) + "°"],
+        ["Joystick:", log.joystick ?? 0],
+        ["Shearing:", log.shearingarm ?? 0],
+        ["Heartbeat:", log.heartbeat ?? 0]
+      ];
+
+      fields.forEach(f=>{
+        let label = document.createElement("span");
+        label.className="log-row-label"; label.innerText=f[0];
+        let value = document.createElement("span");
+        value.className="log-row-value"; value.innerText=f[1];
+        details.appendChild(label); details.appendChild(value);
+      });
+
+      entry.appendChild(details);
+      container.appendChild(entry);
+    });
+
+  } catch(err){ console.error(err); }
+}
+
+setInterval(fetchRoverData, 2000);
+setInterval(fetchRoverLogs, 4000);
+fetchRoverData(); fetchRoverLogs();
+</script>
 </body>
 </html>
