@@ -16,14 +16,13 @@ if not firebase_admin._apps:
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
-rover = db.collection("rover")         # Stores latest rover data
-rover_logs = db.collection("rover_logs")  # Stores history logs
+rover = db.collection("rover")
+rover_logs = db.collection("rover_logs")
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# ---------------- Rover (Latest Data) ----------------
 @app.route("/rover/<doc_id>", methods=["GET"])
 def get_rover(doc_id):
     doc = rover.document(doc_id.strip()).get()
@@ -40,15 +39,11 @@ def create_or_update_rover():
     doc_id = data["id"].strip()
     timestamp = firestore.SERVER_TIMESTAMP
 
-    # Update latest rover data
     rover.document(doc_id).set({**data, "timestamp": timestamp})
-
-    # Add a new log entry with rover id
     rover_logs.add({**data, "id": doc_id, "timestamp": timestamp})
 
     return jsonify({"success": True, "message": "Rover data updated and logged"}), 201
 
-# ---------------- Rover Logs CRUD ----------------
 @app.route("/rover-logs/<rover_id>", methods=["GET"])
 def get_rover_logs(rover_id):
     logs_ref = rover_logs.where("id", "==", rover_id).order_by("timestamp", direction=firestore.Query.DESCENDING)
@@ -82,7 +77,6 @@ def delete_log(log_id):
     rover_logs.document(log_id).delete()
     return jsonify({"success": True, "message": "Log deleted"}), 200
 
-# ---------------- Main ----------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
