@@ -54,10 +54,10 @@ def create_rover():
     if doc_ref.get().exists:
         return jsonify({"success": False, "error": "Rover data with this ID already exists"}), 409
     
-    data["timestamp"] = firestore.SERVER_TIMESTAMP
-    doc_ref.set(data)
-    return jsonify({"success": True, "message": "Rover data created", "data": data}), 201
-
+    # Store timestamp only in Firestore, not in data
+    doc_ref.set({**data, "timestamp": firestore.SERVER_TIMESTAMP})
+    return jsonify({"success": True, "message": "Rover data created"}), 201
+    
 @app.route("/rover/<doc_id>", methods=["PUT"])
 def update_rover(doc_id):
     data = request.get_json()
@@ -68,20 +68,30 @@ def update_rover(doc_id):
     if not doc_ref.get().exists:
         return jsonify({"success": False, "error": "Rover data not found"}), 404
     
-    data["timestamp"] = firestore.SERVER_TIMESTAMP
-    doc_ref.set(data, merge=True)
-    return jsonify({"success": True, "message": "Rover data updated", "data": doc_ref.get().to_dict()}), 200
+    # Add timestamp only in Firestore, not in data
+    doc_ref.set({**data, "timestamp": firestore.SERVER_TIMESTAMP}, merge=True)
+    
+    updated = doc_ref.get().to_dict()
+    return jsonify({"success": True, "message": "Rover data updated", "data": updated}), 200
 
-@app.route("/rover/<doc_id>", methods=["POST"])
-def delete_rover(doc_id):
-    doc_ref = rover.document(doc_id.strip())
+
+@app.route("/delete-rover", methods=["POST"])
+def delete_rover():
+    data = request.get_json()
+    if not data or not data.get("id"):
+        return jsonify({"error": "JSON with 'id' field required"}), 400
+    
+    rover_id = data["id"].strip()
+    doc_ref = rover.document(rover_id)
+    
     if not doc_ref.get().exists:
-        return jsonify({"success": False, "error": "Rover data not found"}), 404
+        return jsonify({"error": "Rover data not found"}), 404
     
     deleted = doc_ref.get().to_dict()
     doc_ref.delete()
-    return jsonify({"success": True, "message": "Rover data deleted", "data": deleted}), 200
+    return jsonify({"message": "Rover data deleted", "data": deleted}), 200
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=False)
