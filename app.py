@@ -6,7 +6,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# Initialize Firebase
+# --- Firebase Init ---
 if "FIREBASE_KEY" in os.environ:
     cred_dict = json.loads(os.environ["FIREBASE_KEY"])
     cred = credentials.Certificate(cred_dict)
@@ -17,15 +17,13 @@ if not firebase_admin._apps:
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
-rover = db.collection("rover")
-rover_logs = db.collection("rover_logs")  # Collection for storing all logs
+rover = db.collection("rover")        # Stores latest rover data
+rover_logs = db.collection("rover_logs")  # Stores history logs
 
-# Home route
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# Debug route
 @app.route("/debug")
 def debug():
     return jsonify({
@@ -33,38 +31,43 @@ def debug():
         "DB_INIT": "yes" if 'db' in globals() else "no"
     })
 
-# Get latest rover data
-@app.route("/rover/latest", methods=["GET"])
-def get_latest_rover():
-    doc_ref = rover.document("rover1")
-    doc = doc_ref.get()
+@app.route("/rovers", methods=["GET"])
+def list_rovers():
+    docs = rover.stream()
+    all_data = [{**doc.to_dict(), "id": doc.id} for doc in docs]
+    return jsonify({"success": True, "data": all_data}), 200
+
+@app.route("/rover/<doc_id>", methods=["GET"])
+def get_rover(doc_id):
+    doc = rover.document(doc_id.strip()).get()
     if doc.exists:
         return jsonify({"success": True, "data": doc.to_dict()}), 200
     return jsonify({"success": False, "error": "Rover data not found"}), 404
 
-# Create or update rover data (POST from rover)
 @app.route("/rover", methods=["POST"])
 def create_or_update_rover():
     data = request.get_json()
     if not data or not data.get("id"):
         return jsonify({"success": False, "error": "JSON with 'id' field required"}), 400
 
-    rover_id = data["id"].strip()
-    timestamp = datetime.utcnow()
-
-    # Add timestamp in Firestore
-    data["timestamp"] = timestamp
+    doc_id = data["id"].strip()
+    timestamp = firestore.SERVER_TIMESTAMP
 
     # Update latest rover data
-    rover.document(rover_id).set(data)
+    rover.document(doc_id).set({**data, "timestamp": timestamp})
 
-    # Log the data in rover_logs
-    log_id = f"{rover_id}_{timestamp.isoformat()}"
-    rover_logs.document(log_id).set(data)
+    # Add a new log entry
+    rover_logs.add({**data, "timestamp": timestamp})
 
-    return jsonify({"success": True, "message": "Rover data updated and logged"}), 200
+    return jsonify({"success": True, "message": "Rover data updated and logged"}), 201
 
-# Delete rover (if needed)
+@app.route("/rover-logs/<doc_id>", methods=["GET"])
+def get_rover_logs(doc_id):
+    logs_ref = rover_logs.where("id", "==", doc_id).order_by("timestamp", direction=firestore.Query.DESCENDING)
+    docs = logs_ref.stream()
+    all_logs = [doc.to_dict() for doc in docs]
+    return jsonify({"success": True, "data": all_logs}), 200
+
 @app.route("/delete-rover", methods=["POST"])
 def delete_rover():
     data = request.get_json()
