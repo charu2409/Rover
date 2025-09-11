@@ -15,18 +15,67 @@
       --connected: #28a745;
       --disconnected: #dc3545;
     }
-    body { margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: var(--primary); color: var(--dark); }
-    header { background: var(--accent); color: var(--white); padding: 15px 25px; text-align: center; font-size: 2rem; font-weight: bold; }
+    body 
+    { 
+      margin: 0; 
+      font-family: "Segoe UI", Tahoma, sans-serif; 
+      background: var(--primary); 
+      color: var(--dark); 
+    }
+    header 
+    { 
+      background: var(--accent); 
+      color: var(--white); 
+      padding: 15px 25px; 
+      text-align: center; 
+      font-size: 2rem; 
+      font-weight: bold; 
+    }
 
-    .container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 30px; }
-    .card { background: var(--white); border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    .card h1 { font-size: 1.2rem; text-align: center; margin-bottom: 15px; color: var(--secondary); }
-    .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); }
-    .label { font-size: 1rem; font-weight: 500; }
-    .value { font-size: 1rem; font-weight: bold; color: var(--dark); }
-    .status { font-size: 1.6rem; font-weight: bold; }
-    .connected { color: var(--connected); }
-    .disconnected { color: var(--disconnected); }
+    .container {
+      display: grid; 
+      rid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+      gap: 20px; 
+      padding: 30px; }
+    
+    .card {
+      background: var(--white); 
+      border-radius: 15px; 
+      padding: 20px; 
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    
+    .card h1 { 
+      font-size: 1.2rem; 
+      text-align: center; 
+      margin-bottom: 15px; 
+      color: var(--secondary); }
+    
+    .row { 
+      display: flex; 
+      justify-content: space-between; 
+      padding: 10px 0; 
+      border-bottom: 1px solid var(--line); }
+    
+    .label { 
+      font-size: 1rem; 
+      font-weight: 500; }
+    
+    .value { 
+      font-size: 1rem; 
+      font-weight: bold; 
+      color: var(--dark); }
+    
+    .status { 
+      font-size: 1.6rem; 
+      font-weight: bold; }
+    
+    .connected { 
+      color: var(--connected);
+      text-align: center }
+    
+    .disconnected { 
+      color: var(--disconnected);
+      text-align: center }
 
     /* Logs */
     #logsContainer { margin-top: 10px; }
@@ -38,15 +87,47 @@
       display: flex;
       flex-direction: column;
     }
-    .log-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
-    .log-timestamp { font-weight: bold; color: var(--secondary); }
-    .log-status { font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 8px; width: fit-content; }
-    .connected-status { background: #d1fae5; color: #028a0f; }
-    .disconnected-status { background: #fde2e1; color: #dc3545; }
-    .log-details { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px 20px; }
-    .log-details div { display: flex; flex-direction: column; }
-    .log-row-label { font-weight: 500; color: var(--secondary); }
-    .log-row-value { font-weight: bold; color: var(--dark); }
+    .log-header { 
+      display: flex; 
+      justify-content: space-between; 
+      margin-bottom: 10px; }
+    
+    .log-timestamp { 
+      font-weight: bold; 
+      color: var(--secondary); }
+    
+    .log-status { 
+      font-weight: bold; 
+      font-size: 0.8rem; 
+      padding: 3px 8px; 
+      border-radius: 8px;
+      width: fit-content; }
+    
+    .connected-status { 
+      background: #d1fae5; 
+      color: #028a0f; }
+    
+    .disconnected-status { 
+      background: #fde2e1; 
+      color: #dc3545; }
+    
+    .log-details { 
+      display: grid; 
+      grid-template-columns: repeat(4,1fr); 
+      gap: 10px 20px; }
+    
+    .log-details div { 
+      display: flex; 
+      flex-direction: column; }
+    
+    .log-row-label { 
+      font-weight: 500; 
+      color: var(--secondary); }
+    
+    .log-row-value { 
+      font-weight: bold; 
+      color: var(--dark); }
+    
   </style>
 </head>
 <body>
@@ -123,10 +204,10 @@ async function fetchRoverLogs() {
     let fields=[
       ["Mode:", log.mode ?? 0],
       ["Speed:", speedMap[log.speed] ?? log.speed ?? 0],
+      ["Shearing Arm:", shearingMap[log.shearingarm] ?? log.shearingarm ?? 0],
+      ["Steering Angle:", (log.angle ?? 0) + "°"],
       ["Steering Mode:", steeringMap[log.steeringmode] ?? log.steeringmode ?? 0],
-      ["Pot Angle:", (log.angle ?? 0) + "°"],
       ["Joystick:", log.joystick ?? 0],
-      ["Shearing:", shearingMap[log.shearingarm] ?? log.shearingarm ?? 0],
       ["Heartbeat:", log.heartbeat ?? 0]
     ];
     fields.forEach(f=>{
