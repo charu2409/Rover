@@ -26,7 +26,7 @@
       margin-bottom: 15px;
     }
 
-    /* Log styling */
+    /* Log card */
     .log-entry {
       background: var(--primary);
       border-radius: 10px;
@@ -58,15 +58,21 @@
       color: #dc3545;
     }
 
-    /* Horizontal row layout */
+    /* Details in 2 rows */
     .log-details {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .log-row {
+      display: flex;
       gap: 30px;
+      flex-wrap: wrap;
     }
     .log-item {
       display: flex;
       gap: 5px;
+      min-width: 150px;
     }
     .log-row-label {
       font-weight: 500;
@@ -77,7 +83,7 @@
       color: var(--dark);
     }
 
-    /* Scrollable logs */
+    /* Scroll */
     #logsContainer {
       max-height: 500px;
       overflow-y: auto;
@@ -94,7 +100,6 @@
   <script>
     const ROVER_ID = "rover1";
 
-    // Lookup maps
     const steeringMap = {
       0: "Unknown", 1: "Front two wheel", 2: "Rear two wheel", 3: "Zero turn"
     };
@@ -108,7 +113,6 @@
       0: "0 kmph", 1: "1 kmph", 2: "2 kmph", 3: "3 kmph", 4: "4 kmph", 5: "5 kmph"
     };
 
-    // Check heartbeat in range
     function checkConnection(hb) {
       return hb >= 1 && hb <= 255;
     }
@@ -158,21 +162,29 @@
           header.appendChild(statusEl);
           entry.appendChild(header);
 
-          // Horizontal details row
+          // Details in two rows
           let details = document.createElement("div");
           details.className = "log-details";
 
-          let fields = [
+          let row1 = document.createElement("div");
+          row1.className = "log-row";
+          let row2 = document.createElement("div");
+          row2.className = "log-row";
+
+          let row1Fields = [
             ["Mode:", log.mode ?? 0],
             ["Speed:", speedMap[log.speed] ?? log.speed ?? 0],
             ["Shearing Arm:", shearingMap[log.shearingarm] ?? log.shearingarm ?? 0],
-            ["Steering Angle:", (log.angle ?? 0) + "°"],
+            ["Steering Angle:", (log.angle ?? 0) + "°"]
+          ];
+
+          let row2Fields = [
             ["Steering Mode:", steeringMap[log.steeringmode] ?? log.steeringmode ?? 0],
             ["Joystick:", joystickMap[log.joystick] ?? log.joystick ?? 0],
             ["Heartbeat:", log.heartbeat ?? 0]
           ];
 
-          fields.forEach(f => {
+          row1Fields.forEach(f => {
             let div = document.createElement("div");
             div.className = "log-item";
 
@@ -186,10 +198,30 @@
 
             div.appendChild(l);
             div.appendChild(v);
-            details.appendChild(div);
+            row1.appendChild(div);
           });
 
+          row2Fields.forEach(f => {
+            let div = document.createElement("div");
+            div.className = "log-item";
+
+            let l = document.createElement("span");
+            l.className = "log-row-label";
+            l.innerText = f[0];
+
+            let v = document.createElement("span");
+            v.className = "log-row-value";
+            v.innerText = f[1];
+
+            div.appendChild(l);
+            div.appendChild(v);
+            row2.appendChild(div);
+          });
+
+          details.appendChild(row1);
+          details.appendChild(row2);
           entry.appendChild(details);
+
           container.appendChild(entry);
         });
       } catch (err) {
@@ -197,7 +229,6 @@
       }
     }
 
-    // Auto refresh
     setInterval(fetchRoverLogs, 3000);
     fetchRoverLogs();
   </script>
