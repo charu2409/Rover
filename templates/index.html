@@ -2,21 +2,65 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Telemetry Log</title>
+  <title>Rover Telemetry Dashboard</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f5f5f5;
       margin: 0;
       padding: 20px;
+      color: #222;
     }
 
-    h2 {
+    header {
+      text-align: center;
+      padding: 15px;
+      background: #2c3e50;
+      color: #fff;
+      border-radius: 8px;
       margin-bottom: 20px;
     }
 
+    h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    /* Status Panel */
+    .status-panel {
+      display: flex;
+      justify-content: space-around;
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .status-item {
+      text-align: center;
+    }
+
+    .status-item span.label {
+      display: block;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .status-item span.value {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 4px;
+      display: block;
+    }
+
+    /* Telemetry Log */
+    h2 {
+      margin: 20px 0 10px;
+    }
+
     .log-container {
-      max-height: 600px;
+      max-height: 500px;
       overflow-y: auto;
       padding-right: 10px;
     }
@@ -76,13 +120,39 @@
   </style>
 </head>
 <body>
+  <header>
+    <h1>Rover Telemetry Dashboard</h1>
+  </header>
+
+  <!-- Status Summary -->
+  <div class="status-panel">
+    <div class="status-item">
+      <span class="label">Battery</span>
+      <span class="value">87%</span>
+    </div>
+    <div class="status-item">
+      <span class="label">Speed</span>
+      <span class="value">2 kmph</span>
+    </div>
+    <div class="status-item">
+      <span class="label">Mode</span>
+      <span class="value">1</span>
+    </div>
+    <div class="status-item">
+      <span class="label">Connection</span>
+      <span class="value" id="liveStatus">Connected</span>
+    </div>
+  </div>
+
+  <!-- Telemetry Log -->
   <h2>Telemetry Log</h2>
   <div class="log-container" id="logContainer"></div>
 
   <script>
     const logContainer = document.getElementById('logContainer');
+    const liveStatus = document.getElementById('liveStatus');
 
-    // ✅ Sample data (simulate your telemetry)
+    // ✅ Sample telemetry data
     const logData = [
       { timestamp: "17:27:49", mode: 1, speed: "2 kmph", arm: "Sensing position", angle: "645°", steering: "Zero turn", joystick: "Backward", heartbeat: 87 },
       { timestamp: "17:27:32", mode: 1, speed: "2 kmph", arm: "Sensing position", angle: "645°", steering: "Zero turn", joystick: "Backward", heartbeat: 500 }, // invalid
@@ -117,6 +187,16 @@
 
         logContainer.appendChild(logEntry);
       });
+
+      // ✅ Update Live Status (based on last heartbeat)
+      const lastEntry = logData[0];
+      if (lastEntry.heartbeat >= 1 && lastEntry.heartbeat <= 255) {
+        liveStatus.innerText = "Connected";
+        liveStatus.style.color = "green";
+      } else {
+        liveStatus.innerText = "Disconnected";
+        liveStatus.style.color = "red";
+      }
     }
 
     renderLogs();
