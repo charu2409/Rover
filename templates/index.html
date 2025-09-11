@@ -122,11 +122,13 @@
       color: var(--secondary);
       font-weight: 500;
       margin-right: 10px;
+      min-width: 150px;
     }
 
     .log-data {
       color: var(--dark);
       font-weight: bold;
+      flex: 1;
     }
 
     @media (max-width: 600px) {
@@ -139,6 +141,7 @@
 
   <header>Rover Telemetry Dashboard</header>
 
+  <!-- First three cards -->
   <div class="container">
     <!-- Vehicle Status -->
     <div class="card">
@@ -189,24 +192,25 @@
         <span id="status" class="status disconnected">Disconnected</span>
       </div>
     </div>
+  </div>
 
-    <!-- Rover Logs -->
-    <div class="card" id="logsCard">
+  <!-- Logs card below all three -->
+  <div class="container">
+    <div class="card" style="grid-column: 1 / -1;">
       <h1>Rover Logs</h1>
-      <div id="logsContainer">
-        <!-- Logs will be dynamically inserted here -->
-      </div>
+      <div id="logsContainer"></div>
     </div>
   </div>
 
   <script>
+    const ROVER_ID = "rover1"; // Change to your rover ID if needed
+
     async function fetchRoverData() {
       try {
-        let res = await fetch("/rover/rover1");
-        let data = await res.json();
-
-        if (data.success) {
-          let d = data.data;
+        let res = await fetch(`/rover/${ROVER_ID}`);
+        let json = await res.json();
+        if (json.success) {
+          let d = json.data;
           document.getElementById("mode").innerText = d.mode ?? 0;
           document.getElementById("speed").innerText = d.speed ?? 0;
           document.getElementById("shearingarm").innerText = d.shearingarm ?? 0;
@@ -224,8 +228,7 @@
             statusEl.className = "status disconnected";
           }
 
-          document.getElementById("lastupdate").innerText =
-            new Date().toLocaleTimeString();
+          document.getElementById("lastupdate").innerText = new Date().toLocaleTimeString();
         }
       } catch (err) {
         console.error("Error fetching rover data", err);
@@ -234,40 +237,39 @@
 
     async function fetchRoverLogs() {
       try {
-        let res = await fetch("/rover-logs/rover1");
-        let logs = await res.json();
-
+        let res = await fetch(`/rover-logs/${ROVER_ID}`);
+        let json = await res.json();
+        let logs = json.data ?? [];
         let container = document.getElementById("logsContainer");
         container.innerHTML = "";
 
         logs.forEach(log => {
           let row = document.createElement("div");
           row.className = "log-row";
+          
+          let ts = log.timestamp && log.timestamp._seconds 
+                   ? new Date(log.timestamp._seconds * 1000).toLocaleString()
+                   : "--";
+          let tsEl = document.createElement("span");
+          tsEl.className = "log-timestamp";
+          tsEl.innerText = ts;
 
-          let ts = new Date(log.timestamp).toLocaleString();
+          let dataEl = document.createElement("span");
+          dataEl.className = "log-data";
+          dataEl.innerText = `Mode:${log.mode}, Speed:${log.speed}, ShearingArm:${log.shearingarm}, Angle:${log.angle}°, SteeringMode:${log.steeringmode}, Joystick:${log.joystick}, Heartbeat:${log.heartbeat}`;
 
-          row.innerHTML = `
-            <span class="log-timestamp">${ts}</span>
-            <span class="log-data">
-              Mode: ${log.mode ?? 0}, 
-              Speed: ${log.speed ?? 0}, 
-              Shearing Arm: ${log.shearingarm ?? 0}, 
-              Angle: ${log.angle ?? 0}°, 
-              Steering Mode: ${log.steeringmode ?? 0}
-            </span>
-          `;
+          row.appendChild(tsEl);
+          row.appendChild(dataEl);
           container.appendChild(row);
         });
+
       } catch (err) {
-        console.error("Error fetching rover logs", err);
+        console.error("Error fetching logs", err);
       }
     }
 
-    // Refresh data and logs periodically
     setInterval(fetchRoverData, 2000);
-    setInterval(fetchRoverLogs, 5000);
-
-    // Initial load
+    setInterval(fetchRoverLogs, 4000); // refresh logs every 4s
     fetchRoverData();
     fetchRoverLogs();
   </script>
