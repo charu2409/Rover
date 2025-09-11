@@ -21,6 +21,13 @@ rover = db.collection("rover")
 @app.route("/")
 def home():
     return render_template("index.html")
+    
+@app.route("/debug")
+def debug():
+    return jsonify({
+        "FIREBASE_KEY_EXISTS": "FIREBASE_KEY" in os.environ,
+        "DB_INIT": "yes" if 'db' in globals() else "no"
+    })
 
 @app.route("/rovers", methods=["GET"])
 def list_rovers():
