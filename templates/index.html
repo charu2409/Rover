@@ -15,8 +15,20 @@
       --connected: #28a745;
       --disconnected: #dc3545;
     }
-    body { margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: var(--primary); color: var(--dark); }
-    header { background: var(--accent); color: var(--white); padding: 15px 25px; text-align: center; font-size: 2rem; font-weight: bold; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: var(--primary);
+      color: var(--dark);
+    }
+    header {
+      background: var(--accent);
+      color: var(--white);
+      padding: 15px 25px;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: bold;
+    }
 
     .container {
       display: grid;
@@ -29,11 +41,11 @@
       border-radius: 15px;
       padding: 20px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      transition: all 0.25s ease;
+      transition: all 0.3s ease;
     }
     .card:hover {
-      transform: scale(1.02);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      transform: translateY(-6px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     }
     .card h1 {
       font-size: 1.2rem;
@@ -41,7 +53,12 @@
       margin-bottom: 15px;
       color: var(--secondary);
     }
-    .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
     .label { font-size: 1rem; font-weight: 500; }
     .value { font-size: 1rem; font-weight: bold; color: var(--dark); }
 
@@ -51,12 +68,12 @@
     .disconnected { color: var(--disconnected); }
 
     /* Logs */
-    #logsWrapper { grid-column: 1 / -1; }
+    #logsWrapper { grid-column: 1 / -1; display: flex; flex-direction: column; }
     #logsContainer {
       margin-top: 10px;
-      max-height: 400px;
+      max-height: 400px;   /* Log card scroll height */
       overflow-y: auto;
-      padding-right: 10px;
+      padding-right: 5px;
     }
     .log-entry {
       background: var(--primary);
@@ -66,15 +83,25 @@
     }
     .log-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
     .log-timestamp { font-weight: bold; color: var(--secondary); }
-    .log-status { font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 8px; width: fit-content; }
+    .log-status {
+      font-weight: bold;
+      font-size: 0.8rem;
+      padding: 3px 8px;
+      border-radius: 8px;
+      width: fit-content;
+    }
     .connected-status { background: #d1fae5; color: #028a0f; }
     .disconnected-status { background: #fde2e1; color: #dc3545; }
-    .log-details { 
-      display: grid; 
-      grid-template-columns: repeat(2,1fr);  /* ✅ Two-column layout (2,2,2,1) */
-      gap: 10px 20px; 
+
+    /* Force log layout to 2,2,2,1 */
+    .log-details {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px 20px;
     }
-    .log-details div { display: flex; flex-direction: column; }
+    .log-details div:last-child {
+      grid-column: 1 / -1; /* last one spans full width */
+    }
     .log-row-label { font-weight: 500; color: var(--secondary); }
     .log-row-value { font-weight: bold; color: var(--dark); }
   </style>
