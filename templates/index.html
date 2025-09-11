@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rover Dashboard</title>
+  <style>
+    :root {
+      --primary: #E0E1DD;
+      --secondary: #778DA9;
+      --accent: #415A77;
+      --dark: #384959;
+      --white: #ffffff;
+      --line: #dcdcdc;
+      --connected: #28a745;
+      --disconnected: #dc3545;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: var(--primary);
+      color: var(--dark);
+    }
+
+    header {
+      background: var(--accent);
+      color: var(--white);
+      padding: 15px 25px;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: bold;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 30px;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+    }
+
+    .card h1 {
+      font-size: 1.2rem;
+      text-align: center;
+      margin-bottom: 15px;
+      color: var(--secondary);
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .row:last-child {
+      border-bottom: none;
+    }
+
+    .label {
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    .value {
+      font-size: 1rem;
+      font-weight: bold;
+      color: var(--dark);
+    }
+
+    .status-container {
+      text-align: center;
+      margin-top: 25px;
+    }
+
+    .status {
+      font-size: 1.6rem;
+      font-weight: bold;
+    }
+
+    .connected {
+      color: var(--connected);
+    }
+
+    .disconnected {
+      color: var(--disconnected);
+    }
+
+    @media (max-width: 600px) {
+      header { font-size: 1.5rem; }
+      .card h1 { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>Rover Telemetry Dashboard</header>
+
+  <div class="container">
+    <!-- Vehicle Status -->
+    <div class="card">
+      <h1>Vehicle Status</h1>
+      <div class="row">
+        <span class="label">Mode</span>
+        <span class="value" id="mode">0</span>
+      </div>
+      <div class="row">
+        <span class="label">Speed</span>
+        <span class="value" id="speed">0</span>
+      </div>
+      <div class="row">
+        <span class="label">Shearing Arm</span>
+        <span class="value" id="shearingarm">0</span>
+      </div>
+    </div>
+
+    <!-- Steering & Control -->
+    <div class="card">
+      <h1>Steering & Control</h1>
+      <div class="row">
+        <span class="label">Steering Angle</span>
+        <span class="value" id="angle">0°</span>
+      </div>
+      <div class="row">
+        <span class="label">Steering Mode</span>
+        <span class="value" id="steeringmode">0</span>
+      </div>
+      <div class="row">
+        <span class="label">Joystick</span>
+        <span class="value" id="joystick">0</span>
+      </div>
+    </div>
+
+    <!-- Connection Health -->
+    <div class="card">
+      <h1>Connection Health</h1>
+      <div class="row">
+        <span class="label">Heartbeat Status</span>
+        <span class="value" id="heartbeat">0</span>
+      </div>
+      <div class="row">
+        <span class="label">Last Update</span>
+        <span class="value" id="lastupdate">--</span>
+      </div>
+      <div class="status-container">
+        <span id="status" class="status disconnected">Disconnected</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function fetchRoverData() {
+      try {
+        // Change "rover1" to your actual Firestore document ID
+        let res = await fetch("/rover/rover1");
+        let data = await res.json();
+
+        if (data.success) {
+          let d = data.data;
+          document.getElementById("mode").innerText = d.mode ?? 0;
+          document.getElementById("speed").innerText = d.speed ?? 0;
+          document.getElementById("shearingarm").innerText = d.shearingarm ?? 0;
+          document.getElementById("angle").innerText = (d.angle ?? 0) + "°";
+          document.getElementById("steeringmode").innerText = d.steeringmode ?? 0;
+          document.getElementById("joystick").innerText = d.joystick ?? 0;
+          document.getElementById("heartbeat").innerText = d.heartbeat ?? 0;
+
+          // Update connection status
+          let statusEl = document.getElementById("status");
+          if (d.heartbeat && d.heartbeat > 0) {
+            statusEl.innerText = "Connected";
+            statusEl.className = "status connected";
+          } else {
+            statusEl.innerText = "Disconnected";
+            statusEl.className = "status disconnected";
+          }
+
+          // Update last update time
+          document.getElementById("lastupdate").innerText =
+            new Date().toLocaleTimeString();
+        }
+      } catch (err) {
+        console.error("Error fetching rover data", err);
+      }
+    }
+
+    // Refresh every 2 seconds
+    setInterval(fetchRoverData, 2000);
+    fetchRoverData(); // initial load
+  </script>
+
+</body>
+</html>
