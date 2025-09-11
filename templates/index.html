@@ -15,199 +15,107 @@
       --connected: #28a745;
       --disconnected: #dc3545;
     }
-
-    body {
-      margin: 0;
-      font-family: "Segoe UI", Tahoma, sans-serif;
-      background: var(--primary);
-      color: var(--dark);
-    }
-
-    header {
-      background: var(--accent);
-      color: var(--white);
-      padding: 15px 25px;
-      text-align: center;
-      font-size: 2rem;
-      font-weight: bold;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.2);
-    }
-
-    .container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-      padding: 30px;
-    }
-
-    .card {
-      background: var(--white);
-      border-radius: 15px;
-      padding: 20px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 6px 14px rgba(0,0,0,0.15);
-    }
-
-    .card h1 {
-      font-size: 1.2rem;
-      text-align: center;
-      margin-bottom: 15px;
-      color: var(--secondary);
-    }
-
-    .row {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .row:last-child {
-      border-bottom: none;
-    }
-
-    .label {
-      font-size: 1rem;
-      font-weight: 500;
-    }
-
-    .value {
-      font-size: 1rem;
-      font-weight: bold;
-      color: var(--dark);
-    }
-
-    .status-container {
-      text-align: center;
-      margin-top: 25px;
-    }
-
-    .status {
-      font-size: 1.6rem;
-      font-weight: bold;
-    }
-
-    .connected {
-      color: var(--connected);
-    }
-
-    .disconnected {
-      color: var(--disconnected);
-    }
-
-    @media (max-width: 600px) {
-      header { font-size: 1.5rem; }
-      .card h1 { font-size: 1rem; }
-    }
+    body { margin:0; font-family:"Segoe UI", Tahoma, sans-serif; background: var(--primary); color: var(--dark); }
+    header { background: var(--accent); color: var(--white); padding:15px 25px; text-align:center; font-size:2rem; font-weight:bold; box-shadow:0 3px 6px rgba(0,0,0,0.2);}
+    .container { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:20px; padding:30px;}
+    .card { background: var(--white); border-radius:15px; padding:20px; box-shadow:0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s;}
+    .card:hover { transform: translateY(-5px); box-shadow:0 6px 14px rgba(0,0,0,0.15);}
+    .card h1 { font-size:1.2rem; text-align:center; margin-bottom:15px; color: var(--secondary);}
+    .row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line);}
+    .row:last-child { border-bottom:none;}
+    .label { font-size:1rem; font-weight:500;}
+    .value { font-size:1rem; font-weight:bold; color: var(--dark);}
+    .status-container { text-align:center; margin-top:25px;}
+    .status { font-size:1.6rem; font-weight:bold;}
+    .connected { color: var(--connected);}
+    .disconnected { color: var(--disconnected);}
   </style>
 </head>
 <body>
-
   <header>Rover Telemetry Dashboard</header>
-
   <div class="container">
-    <!-- Vehicle Status -->
     <div class="card">
       <h1>Vehicle Status</h1>
-      <div class="row">
-        <span class="label">Mode</span>
-        <span class="value" id="mode">--</span>
-      </div>
-      <div class="row">
-        <span class="label">Speed</span>
-        <span class="value" id="speed">--</span>
-      </div>
-      <div class="row">
-        <span class="label">Shearing Arm</span>
-        <span class="value" id="shearingarm">--</span>
-      </div>
+      <div class="row"><span class="label">Mode</span><span class="value" id="mode">0</span></div>
+      <div class="row"><span class="label">Speed</span><span class="value" id="speed">0 km/h</span></div>
+      <div class="row"><span class="label">Shearing Arm</span><span class="value" id="shearingarm">0</span></div>
     </div>
-
-    <!-- Steering & Control -->
     <div class="card">
       <h1>Steering & Control</h1>
-      <div class="row">
-        <span class="label">Steering Angle</span>
-        <span class="value" id="angle">--</span>
-      </div>
-      <div class="row">
-        <span class="label">Steering Mode</span>
-        <span class="value" id="steeringmode">--</span>
-      </div>
-      <div class="row">
-        <span class="label">Joystick</span>
-        <span class="value" id="joystick">--</span>
-      </div>
+      <div class="row"><span class="label">Steering Angle</span><span class="value" id="angle">0°</span></div>
+      <div class="row"><span class="label">Steering Mode</span><span class="value" id="steeringmode">0</span></div>
+      <div class="row"><span class="label">Joystick</span><span class="value" id="joystick">0</span></div>
     </div>
-
-    <!-- Connection Health -->
     <div class="card">
       <h1>Connection Health</h1>
-      <div class="row">
-        <span class="label">Heartbeat Status</span>
-        <span class="value" id="heartbeat">--</span>
-      </div>
-      <div class="row">
-        <span class="label">Last Update</span>
-        <span class="value" id="lastupdate">--</span>
-      </div>
-      <div class="status-container">
-        <span id="status" class="status disconnected">Disconnected</span>
-      </div>
+      <div class="row"><span class="label">Heartbeat Status</span><span class="value" id="heartbeat">0</span></div>
+      <div class="row"><span class="label">Last Update</span><span class="value" id="lastupdate">--</span></div>
+      <div class="status-container"><span id="status" class="status disconnected">Disconnected</span></div>
     </div>
   </div>
 
   <script>
-    // Value mappings
-    const speedMap = {1: "0.5 kmph", 2: "1 kmph", 3: "1.5 kmph", 4: "2 kmph", 5: "2.5 kmph"};
-    const steeringMap = {1: "Home pos", 2: "All wheel", 3: "Zero turn", 4: "Crab"};
-    const shearingMap = {0: "Home pos", 1: "Sensing pos"};
+    function mapSpeed(value){
+      switch(value){
+        case 1: return "0.5 km/h";
+        case 2: return "1 km/h";
+        case 3: return "1.5 km/h";
+        case 4: return "2 km/h";
+        case 5: return "2.5 km/h";
+        default: return "0 km/h";
+      }
+    }
+
+    function mapMode(value){
+      switch(value){
+        case 1: return "Home pos mode";
+        case 2: return "All wheel mode";
+        case 3: return "Zero turn";
+        case 4: return "Crab";
+        default: return "0";
+      }
+    }
+
+    function mapShearing(value){
+      switch(value){
+        case 1: return "Sensing pos";
+        case 0: return "Home pos";
+        default: return "0";
+      }
+    }
 
     async function fetchRoverData() {
       try {
-        let res = await fetch("/rovers");
-        let result = await res.json();
+        let res = await fetch("/rover/latest");
+        let data = await res.json();
+        if(data.success){
+          let d = data.data;
+          document.getElementById("mode").innerText = mapMode(d.mode ?? 0);
+          document.getElementById("speed").innerText = mapSpeed(d.speed ?? 0);
+          document.getElementById("shearingarm").innerText = mapShearing(d.shearingarm ?? 0);
+          document.getElementById("angle").innerText = (d.angle ?? 0) + "°";
+          document.getElementById("steeringmode").innerText = d.steeringmode ?? 0;
+          document.getElementById("joystick").innerText = d.joystick ?? 0;
+          document.getElementById("heartbeat").innerText = d.heartbeat ?? 0;
 
-        if (result.success && result.data) {
-          let d = result.data;
-
-          document.getElementById("mode").innerText = d.Mode ?? "--";
-          document.getElementById("speed").innerText = speedMap[d.Speed] ?? "--";
-          document.getElementById("shearingarm").innerText = shearingMap[d.Shearing_Arm] ?? "--";
-          document.getElementById("angle").innerText = (d.Angle ?? 0) + "°";
-          document.getElementById("steeringmode").innerText = steeringMap[d.Steering_Mode] ?? "--";
-          document.getElementById("joystick").innerText = d.Joystick ?? "--";
-          document.getElementById("heartbeat").innerText = d.Heartbeat ?? "--";
-
-          // Status check
           let statusEl = document.getElementById("status");
-          if (d.Heartbeat && d.Heartbeat > 0) {
+          if(d.heartbeat && d.heartbeat > 0){
             statusEl.innerText = "Connected";
             statusEl.className = "status connected";
-          } else {
+          }else{
             statusEl.innerText = "Disconnected";
             statusEl.className = "status disconnected";
           }
 
-          // Last update timestamp (from Firestore)
-          document.getElementById("lastupdate").innerText = d.timestamp
-            ? new Date(d.timestamp).toLocaleString()
-            : "--";
+          document.getElementById("lastupdate").innerText = new Date(d.timestamp).toLocaleTimeString();
         }
-      } catch (err) {
+      } catch(err){
         console.error("Error fetching rover data", err);
       }
     }
 
-    // Poll every 2 seconds
     setInterval(fetchRoverData, 2000);
     fetchRoverData();
   </script>
-
 </body>
 </html>
