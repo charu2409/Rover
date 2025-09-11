@@ -23,12 +23,6 @@ rover_logs = db.collection("rover_logs")  # Stores history logs
 def home():
     return render_template("index.html")
 
-@app.route("/rovers", methods=["GET"])
-def list_rovers():
-    docs = rover.stream()
-    all_data = [{**doc.to_dict(), "id": doc.id} for doc in docs]
-    return jsonify({"success": True, "data": all_data}), 200
-
 @app.route("/rover/<doc_id>", methods=["GET"])
 def get_rover(doc_id):
     doc = rover.document(doc_id.strip()).get()
@@ -60,22 +54,6 @@ def get_rover_logs(rover_id):
     docs = logs_ref.stream()
     all_logs = [doc.to_dict() for doc in docs]
     return jsonify({"success": True, "data": all_logs}), 200
-
-@app.route("/delete-rover", methods=["POST"])
-def delete_rover():
-    data = request.get_json()
-    if not data or not data.get("id"):
-        return jsonify({"error": "JSON with 'id' field required"}), 400
-
-    rover_id = data["id"].strip()
-    doc_ref = rover.document(rover_id)
-
-    if not doc_ref.get().exists:
-        return jsonify({"error": "Rover data not found"}), 404
-
-    deleted = doc_ref.get().to_dict()
-    doc_ref.delete()
-    return jsonify({"message": "Rover data deleted", "data": deleted}), 200
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
