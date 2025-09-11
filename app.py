@@ -1,87 +1,88 @@
-import os, json, datetime
+import os, json
 from flask import Flask, request, jsonify, render_template
 import firebase_admin
 from firebase_admin import credentials, firestore
 
 app = Flask(__name__)
 
-# --- Initialize Firebase Admin ---
+# --- Firebase Init ---
 if "FIREBASE_KEY" in os.environ:
     cred_dict = json.loads(os.environ["FIREBASE_KEY"])
     cred = credentials.Certificate(cred_dict)
 else:
-    cred = credentials.Certificate("serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
+    cred = credentials.Certificate("C:/Users/charu/Downloads/rover-b01fb-firebase-adminsdk-fbsvc-95614c61b5.json")
+
+if not firebase_admin._apps:
+    firebase_admin.initialize_app(cred)
 
 db = firestore.client()
-logs_ref = db.collection("rover_logs")
-
-# ---------------------- CRUD for Logs ----------------------
-
-# Create new log (POST)
-@app.route("/log", methods=["POST"])
-def create_log():
-    data = request.json
-    data["timestamp"] = datetime.datetime.utcnow()
-    # add rover_id field for UI compatibility
-    data["rover_id"] = data.get("rover_id", "rover1")
-    log_ref = logs_ref.add(data)
-    return jsonify({"message": "Log created", "log_id": log_ref[1].id}), 201
-
-# Get latest data for a rover
-@app.route("/rover/<rover_id>", methods=["GET"])
-def get_rover(rover_id):
-    docs = (
-        logs_ref.where("rover_id", "==", rover_id)
-        .order_by("timestamp", direction=firestore.Query.DESCENDING)
-        .limit(1)
-        .stream()
-    )
-    latest = None
-    for d in docs:
-        latest = {**d.to_dict(), "log_id": d.id}
-    if latest:
-        return jsonify({"success": True, "data": latest}), 200
-    return jsonify({"success": False, "error": "No data"}), 404
-
-# Get all logs for a rover
-@app.route("/rover-logs/<rover_id>", methods=["GET"])
-def get_rover_logs(rover_id):
-    docs = (
-        logs_ref.where("rover_id", "==", rover_id)
-        .order_by("timestamp", direction=firestore.Query.DESCENDING)
-        .stream()
-    )
-    all_logs = [{**d.to_dict(), "log_id": d.id} for d in docs]
-    return jsonify({"success": True, "data": all_logs}), 200
-
-# Update log by ID (PUT)
-@app.route("/log/<log_id>", methods=["PUT"])
-def update_log(log_id):
-    data = request.json
-    log_doc = logs_ref.document(log_id)
-    if log_doc.get().exists:
-        data["updated_at"] = datetime.datetime.utcnow()
-        log_doc.update(data)
-        return jsonify({"message": f"Log {log_id} updated"}), 200
-    return jsonify({"error": "Log not found"}), 404
-
-# Delete log by ID (DELETE)
-@app.route("/log/<log_id>", methods=["POST"])
-def delete_log(log_id):
-    log_doc = logs_ref.document(log_id)
-    if log_doc.get().exists:
-        log_doc.delete()
-        return jsonify({"message": f"Log {log_id} deleted"}), 200
-    return jsonify({"error": "Log not found"}), 404
-
-# ---------------------- UI ----------------------
+rover = db.collection("rover")         # Stores latest rover data
+rover_logs = db.collection("rover_logs")  # Stores history logs
 
 @app.route("/")
-def index():
+def home():
     return render_template("index.html")
 
-# ---------------------- Run ----------------------
+# ---------------- Rover (Latest Data) ----------------
+@app.route("/rover/<doc_id>", methods=["GET"])
+def get_rover(doc_id):
+    doc = rover.document(doc_id.strip()).get()
+    if doc.exists:
+        return jsonify({"success": True, "data": doc.to_dict()}), 200
+    return jsonify({"success": False, "error": "Rover data not found"}), 404
 
+@app.route("/rover", methods=["POST"])
+def create_or_update_rover():
+    data = request.get_json()
+    if not data or not data.get("id"):
+        return jsonify({"success": False, "error": "JSON with 'id' field required"}), 400
+
+    doc_id = data["id"].strip()
+    timestamp = firestore.SERVER_TIMESTAMP
+
+    # Update latest rover data
+    rover.document(doc_id).set({**data, "timestamp": timestamp})
+
+    # Add a new log entry with rover id
+    rover_logs.add({**data, "id": doc_id, "timestamp": timestamp})
+
+    return jsonify({"success": True, "message": "Rover data updated and logged"}), 201
+
+# ---------------- Rover Logs CRUD ----------------
+@app.route("/rover-logs/<rover_id>", methods=["GET"])
+def get_rover_logs(rover_id):
+    logs_ref = rover_logs.where("id", "==", rover_id).order_by("timestamp", direction=firestore.Query.DESCENDING)
+    docs = logs_ref.stream()
+    all_logs = [{"log_id": doc.id, **doc.to_dict()} for doc in docs]
+    return jsonify({"success": True, "data": all_logs}), 200
+
+@app.route("/rover-logs", methods=["GET"])
+def get_all_logs():
+    docs = rover_logs.order_by("timestamp", direction=firestore.Query.DESCENDING).stream()
+    all_logs = [{"log_id": doc.id, **doc.to_dict()} for doc in docs]
+    return jsonify({"success": True, "data": all_logs}), 200
+
+@app.route("/rover-log/<log_id>", methods=["GET"])
+def get_single_log(log_id):
+    doc = rover_logs.document(log_id).get()
+    if doc.exists:
+        return jsonify({"success": True, "data": {"log_id": doc.id, **doc.to_dict()}}), 200
+    return jsonify({"success": False, "error": "Log not found"}), 404
+
+@app.route("/rover-log/<log_id>", methods=["PUT"])
+def update_log(log_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+    rover_logs.document(log_id).update(data)
+    return jsonify({"success": True, "message": "Log updated"}), 200
+
+@app.route("/rover-log/<log_id>", methods=["POST"])
+def delete_log(log_id):
+    rover_logs.document(log_id).delete()
+    return jsonify({"success": True, "message": "Log deleted"}), 200
+
+# ---------------- Main ----------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
