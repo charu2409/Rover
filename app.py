@@ -65,7 +65,7 @@ def update_rover(doc_id):
     doc_ref.set(data, merge=True)
     return jsonify({"success": True, "message": "Rover data updated", "data": doc_ref.get().to_dict()}), 200
 
-@app.route("/rover/<doc_id>", methods=["DELETE"])
+@app.route("/rover/<doc_id>", methods=["POST"])
 def delete_rover(doc_id):
     doc_ref = rover.document(doc_id.strip())
     if not doc_ref.get().exists:
