@@ -23,13 +23,7 @@ rover_logs = db.collection("rover_logs")
 def home():
     return render_template("index.html")
 
-@app.route("/rover/<doc_id>", methods=["GET"])
-def get_rover(doc_id):
-    doc = rover.document(doc_id.strip()).get()
-    if doc.exists:
-        return jsonify({"success": True, "data": doc.to_dict()}), 200
-    return jsonify({"success": False, "error": "Rover data not found"}), 404
-
+# --- POST: Create or Update Rover Data & Log ---
 @app.route("/rover", methods=["POST"])
 def create_or_update_rover():
     data = request.get_json()
@@ -39,31 +33,29 @@ def create_or_update_rover():
     doc_id = data["id"].strip()
     timestamp = firestore.SERVER_TIMESTAMP
 
+    # Save rover data
     rover.document(doc_id).set({**data, "timestamp": timestamp})
+    # Save log entry
     rover_logs.add({**data, "id": doc_id, "timestamp": timestamp})
 
     return jsonify({"success": True, "message": "Rover data updated and logged"}), 201
 
-@app.route("/rover-logs/<rover_id>", methods=["GET"])
-def get_rover_logs(rover_id):
-    logs_ref = rover_logs.where("id", "==", rover_id).order_by("timestamp", direction=firestore.Query.DESCENDING)
-    docs = logs_ref.stream()
-    all_logs = [{"log_id": doc.id, **doc.to_dict()} for doc in docs]
-    return jsonify({"success": True, "data": all_logs}), 200
+# --- GET: Get Rover by ID ---
+@app.route("/rover/<doc_id>", methods=["GET"])
+def get_rover(doc_id):
+    doc = rover.document(doc_id.strip()).get()
+    if doc.exists:
+        return jsonify({"success": True, "data": doc.to_dict()}), 200
+    return jsonify({"success": False, "error": "Rover data not found"}), 404
 
+# --- GET-ALL: Get All Rover Logs ---
 @app.route("/rover-logs", methods=["GET"])
 def get_all_logs():
     docs = rover_logs.order_by("timestamp", direction=firestore.Query.DESCENDING).stream()
     all_logs = [{"log_id": doc.id, **doc.to_dict()} for doc in docs]
     return jsonify({"success": True, "data": all_logs}), 200
 
-@app.route("/rover-log/<log_id>", methods=["GET"])
-def get_single_log(log_id):
-    doc = rover_logs.document(log_id).get()
-    if doc.exists:
-        return jsonify({"success": True, "data": {"log_id": doc.id, **doc.to_dict()}}), 200
-    return jsonify({"success": False, "error": "Log not found"}), 404
-
+# --- PUT: Update Log by Log ID ---
 @app.route("/rover-log/<log_id>", methods=["PUT"])
 def update_log(log_id):
     data = request.get_json()
@@ -72,7 +64,8 @@ def update_log(log_id):
     rover_logs.document(log_id).update(data)
     return jsonify({"success": True, "message": "Log updated"}), 200
 
-@app.route("/rover-log/<log_id>", methods=["POST"])
+# --- DELETE: Delete Log by Log ID ---
+@app.route("/rover-log/<log_id>", methods=["DELETE"])
 def delete_log(log_id):
     rover_logs.document(log_id).delete()
     return jsonify({"success": True, "message": "Log deleted"}), 200
