@@ -35,7 +35,7 @@ def create_or_update_rover():
 
     # Save rover data
     rover.document(doc_id).set({**data, "timestamp": timestamp})
-    # Save log entry
+    # Save log entry (so history is tracked)
     rover_logs.add({**data, "id": doc_id, "timestamp": timestamp})
 
     return jsonify({"success": True, "message": "Rover data updated and logged"}), 201
@@ -48,14 +48,15 @@ def get_rover(doc_id):
         return jsonify({"success": True, "data": doc.to_dict()}), 200
     return jsonify({"success": False, "error": "Rover data not found"}), 404
 
-# --- GET-ALL: Get All Rover Logs ---
-@app.route("/rover-logs", methods=["GET"])
-def get_all_logs():
-    docs = rover_logs.order_by("timestamp", direction=firestore.Query.DESCENDING).stream()
-    all_logs = [{"log_id": doc.id, **doc.to_dict()} for doc in docs]
-    return jsonify({"success": True, "data": all_logs}), 200
+# --- GET-ALL: Get All Rover Logs (for UI table) ---
+@app.route("/rover-logs/<rover_id>", methods=["GET"])
+def get_logs_for_rover(rover_id):
+    """Return logs filtered by rover id (so UI can display per rover)."""
+    docs = rover_logs.where("id", "==", rover_id).order_by("timestamp", direction=firestore.Query.DESCENDING).stream()
+    logs = [{"log_id": doc.id, **doc.to_dict()} for doc in docs]
+    return jsonify({"success": True, "data": logs}), 200
 
-# --- PUT: Update Log by Log ID ---
+# --- Keep existing log-level routes ---
 @app.route("/rover-log/<log_id>", methods=["PUT"])
 def update_log(log_id):
     data = request.get_json()
@@ -64,8 +65,7 @@ def update_log(log_id):
     rover_logs.document(log_id).update(data)
     return jsonify({"success": True, "message": "Log updated"}), 200
 
-# --- DELETE: Delete Log by Log ID ---
-@app.route("/rover-log/<log_id>", methods=["DELETE"])
+@app.route("/rover-log/<log_id>", methods=["POST"])
 def delete_log(log_id):
     rover_logs.document(log_id).delete()
     return jsonify({"success": True, "message": "Log deleted"}), 200
