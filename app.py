@@ -65,10 +65,24 @@ def update_log(log_id):
     rover_logs.document(log_id).update(data)
     return jsonify({"success": True, "message": "Log updated"}), 200
 
-@app.route("/rover-log/<log_id>", methods=["POST"])
-def delete_log(log_id):
-    rover_logs.document(log_id).delete()
-    return jsonify({"success": True, "message": "Log deleted"}), 200
+# --- DELETE: Delete Log by JSON { "log_id": "..." } ---
+@app.route("/delete-log", methods=["POST"])
+def delete_log():
+    data = request.get_json()
+    if not data or not data.get("log_id"):
+        return jsonify({"success": False, "error": "JSON with 'log_id' field required"}), 400
+    
+    log_id = data["log_id"].strip()
+    doc_ref = rover_logs.document(log_id)
+    
+    if not doc_ref.get().exists:
+        return jsonify({"success": False, "error": "Log not found"}), 404
+    
+    deleted = doc_ref.get().to_dict()
+    doc_ref.delete()
+    
+    return jsonify({"success": True, "message": "Log deleted", "data": {"log_id": log_id, **deleted}}), 200
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
