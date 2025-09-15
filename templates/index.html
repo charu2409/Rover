@@ -18,31 +18,64 @@
     body { margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: var(--primary); color: var(--dark); }
     header { background: var(--accent); color: var(--white); padding: 15px 25px; text-align: center; font-size: 2rem; font-weight: bold; }
 
-    .container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 30px; }
-    .card { background: var(--white); border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    .card h1 { font-size: 1.5rem; text-align: center; margin-bottom: 15px; color: var(--secondary); }
+    .container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr); /* 3 equal cards in a row */
+      gap: 20px;
+      padding: 30px;
+    }
+    .card {
+      background: var(--white);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .card h1 {
+      font-size: 1.5rem;
+      text-align: center;
+      margin-bottom: 15px;
+      color: var(--secondary);
+    }
     .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); }
     .label { font-size: 1rem; font-weight: 500; }
     .value { font-size: 1rem; font-weight: bold; color: var(--dark); }
-    #logsWrapper { grid-column: 1 / -1; }
-    #logsContainer { margin-top: 10px; max-height: 400px; overflow-y: auto; padding-right: 8px; }
 
-    .log-entry { background: var(--primary); border-radius: 10px; padding: 15px; margin-bottom: 15px; display: flex; flex-direction: column; }
+    .status-container { display: flex; justify-content: center; margin-top: 20px; }
+    .status { font-size: 1.6rem; font-weight: bold; }
+    .connected { color: var(--connected); }
+    .disconnected { color: var(--disconnected); }
+
+    /* Logs */
+    #logsWrapper { grid-column: 1 / -1; }
+    #logsContainer {
+      margin-top: 10px;
+      max-height: 400px;   /* fixed height */
+      overflow-y: auto;    /* scrollable */
+      padding-right: 8px;
+    }
+    .log-entry {
+      background: var(--primary);
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      display: flex;
+      flex-direction: column;
+    }
     .log-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
     .log-timestamp { font-weight: bold; color: var(--secondary); }
     .log-status { font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 8px; width: fit-content; }
     .connected-status { background: #d1fae5; color: #028a0f; }
     .disconnected-status { background: #fde2e1; color: #dc3545; }
-
-    /* GNSS Card */
-    #gnssCard { grid-column: 1 / -1; margin-top: 20px; }
+    .log-details { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px 20px; }
+    .log-details div { display: flex; flex-direction: column; }
+    .log-row-label { font-weight: 500; color: var(--secondary); }
+    .log-row-value { font-weight: bold; color: var(--dark); }
   </style>
 </head>
 <body>
 <header>Rover Telemetry Dashboard</header>
 
 <div class="container">
-  <!-- Existing Rover Cards -->
   <div class="card">
     <h1>Vehicle Status</h1>
     <div class="row"><span class="label">Mode</span><span class="value" id="mode">0</span></div>
@@ -62,46 +95,81 @@
     <div class="status-container"><span id="status" class="status disconnected">Disconnected</span></div>
   </div>
 
-  <!-- Telemetry Logs -->
   <div class="card" id="logsWrapper">
     <h1>Telemetry Log</h1>
     <div id="logsContainer"></div>
   </div>
 
-  <!-- GNSS Data -->
-  <div class="card" id="gnssCard">
+  <!-- GNSS Data Card Added -->
+  <div class="card" id="gnssWrapper">
     <h1>GNSS Data</h1>
-    <div class="row"><span class="label">Latitude</span><span class="value" id="lat">--</span></div>
-    <div class="row"><span class="label">Longitude</span><span class="value" id="lon">--</span></div>
-    <div class="row"><span class="label">Altitude</span><span class="value" id="alt">--</span></div>
-    <div class="row"><span class="label">Speed</span><span class="value" id="gnss_speed">--</span></div>
-    <div class="row"><span class="label">Time</span><span class="value" id="gnss_time">--</span></div>
-    <div class="row"><span class="label">Date</span><span class="value" id="gnss_date">--</span></div>
+    <div class="row"><span class="label">Latitude</span><span class="value" id="latitude">--</span></div>
+    <div class="row"><span class="label">Longitude</span><span class="value" id="longitude">--</span></div>
   </div>
 </div>
 
 <script>
 const ROVER_ID = "rover1";
+const speedMap = {1:"0.5 kmph",2:"1 kmph",3:"1.5 kmph",4:"2 kmph",5:"2.5 kmph"};
+const steeringMap = {1:"Home position",2:"All wheel mode",3:"Zero turn",4:"Crab"};
+const shearingMap = {0:"Home position",1:"Sensing position"};
 
-async function fetchGNSS() {
-  let res = await fetch("/gnss/latest");
+function isHeartbeatValid(hb) {
+  return hb >= 1 && hb <= 255;
+}
+
+async function fetchRoverData() {
+  let res = await fetch(`/rover/${ROVER_ID}`);
   let data = await res.json();
   if (data.success) {
     let d = data.data;
-    document.getElementById("lat").innerText = d.lat ?? "--";
-    document.getElementById("lon").innerText = d.lon ?? "--";
-    document.getElementById("alt").innerText = d.alt ?? "--";
-    document.getElementById("gnss_speed").innerText = d.speed ?? "--";
-    document.getElementById("gnss_time").innerText = d.time ?? "--";
-    document.getElementById("gnss_date").innerText = d.date ?? "--";
+    document.getElementById("mode").innerText = d.mode ?? 0;
+    document.getElementById("speed").innerText = speedMap[d.speed] ?? d.speed ?? 0;
+    document.getElementById("shearingarm").innerText = shearingMap[d.shearingarm] ?? d.shearingarm ?? 0;
+    document.getElementById("angle").innerText = (d.angle ?? 0) + "°";
+    document.getElementById("steeringmode").innerText = steeringMap[d.steeringmode] ?? d.steeringmode ?? 0;
+    document.getElementById("joystick").innerText = d.joystick ?? 0;
+    document.getElementById("heartbeat").innerText = d.heartbeat ?? 0;
+
+    let statusEl = document.getElementById("status");
+    if (isHeartbeatValid(d.heartbeat)) {
+      statusEl.innerText = "Connected";
+      statusEl.className = "status connected";
+    } else {
+      statusEl.innerText = "Disconnected";
+      statusEl.className = "status disconnected";
+    }
+
+    document.getElementById("lastupdate").innerText = new Date().toLocaleTimeString();
+
+    // GNSS updates
+    document.getElementById("latitude").innerText = d.gps?.latitude ?? "--";
+    document.getElementById("longitude").innerText = d.gps?.longitude ?? "--";
   }
 }
 
-// Existing fetchRoverData + fetchRoverLogs (kept same) ...
-// (Paste your original JS functions here unchanged)
+async function fetchRoverLogs() {
+  let res = await fetch(`/rover-logs/${ROVER_ID}`);
+  let json = await res.json();
+  let logs = json.data ?? [];
+  let container = document.getElementById("logsContainer");
+  container.innerHTML = "";
+  logs.forEach(log=>{
+    let ts = "--";
+    if (log.timestamp) {
+      if (log.timestamp.seconds) ts = new Date(log.timestamp.seconds*1000).toLocaleTimeString();
+      else if (log.timestamp._seconds) ts = new Date(log.timestamp._seconds*1000).toLocaleTimeString();
+      else ts = new Date(log.timestamp).toLocaleTimeString();
+    }
+    let entry=document.createElement("div"); entry.className="log-entry";
+    let header=document.createElement("div"); header.className="log-header";
+    let tsEl=document.createElement("span"); tsEl.className="log-timestamp"; tsEl.innerText=ts;
 
-setInterval(fetchGNSS, 4000);
-fetchGNSS();
-</script>
-</body>
-</html>
+    let hbValid = isHeartbeatValid(log.heartbeat);
+    let statusEl=document.createElement("span");
+    statusEl.className="log-status " + (hbValid ? "connected-status":"disconnected-status");
+    statusEl.innerText=hbValid ? "Connected" : "Disconnected";
+
+    header.appendChild(tsEl); header.appendChild(statusEl); entry.appendChild(header);
+
+    let details=document.createElement("div"); details.className
