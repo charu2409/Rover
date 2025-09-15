@@ -2,7 +2,7 @@ import serial
 import time
 import requests
 
-SERIAL_PORT = "COM3"          # Replace with your port
+SERIAL_PORT = "COM8"          # Replace with your port
 BAUD_RATE = 115200
 URL = "https://your-render-url/rover"  # Your Flask server
 ROVER_ID = "rover1"
