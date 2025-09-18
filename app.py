@@ -10,7 +10,8 @@ if "FIREBASE_KEY" in os.environ:
     cred_dict = json.loads(os.environ["FIREBASE_KEY"])
     cred = credentials.Certificate(cred_dict)
 else:
-    cred = credentials.Certificate("C:/Users/charu/Downloads/rover-b01fb-firebase-adminsdk-fbsvc-95614c61b5.json")
+    cred = credentials.Certificate("C:\Users\charu\Downloads\rover-b01fb-firebase-adminsdk-fbsvc-95614c61b5.json")
+
 
 if not firebase_admin._apps:
     firebase_admin.initialize_app(cred)
